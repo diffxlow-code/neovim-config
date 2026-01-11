@@ -1,7 +1,7 @@
 -- Basic options
 vim.opt.relativenumber = true
 vim.opt.number = true
-vim.opt.guicursor = ""
+vim.opt.guicursor = "n-v-c:ver25,i-ci-ve:ver25"
 vim.opt.autoindent = true
 vim.opt.smartindent = true
 vim.opt.cindent = true
@@ -55,6 +55,7 @@ require("lazy").setup({
             vim.api.nvim_set_hl(0, "IblScope", {fg = "#ff5555"})
         end,
     },
+
     {
         "folke/flash.nvim",
         opts = {
@@ -80,13 +81,36 @@ require("lazy").setup({
 })
 
 -- Theme
-require("rose-pine").setup({ styles = { bold = fasle, italic = false, transparency = true }})
-vim.cmd("colorscheme rose-pine")
+vim.cmd("colorscheme quiet")
+
+
+--Highlights  
+vim.api.nvim_set_hl(0, "Pmenu", { bg = "#000000", fg = "#ffffff" })
+vim.api.nvim_set_hl(0, "PmenuSel", { bg = "#222222", fg = "#ffffff" })
+vim.api.nvim_set_hl(0, "PmenuSbar", { bg = "#000000" })
+vim.api.nvim_set_hl(0, "PmenuThumb", { bg = "#444444" })
+
+-- Visual mode selection
+vim.api.nvim_set_hl(0, "Visual", { bg = "#000000", fg = "#888888" })
+
+-- Disable matching parenthesis highlight
+vim.api.nvim_set_hl(0, "MatchParen", { bg = "NONE", fg = "#ff5555" })
+
+
+-- Highlight all search matches
+vim.api.nvim_set_hl(0, "Search", { fg = "#ffffff", bg = "#444444", bold = false })
+
+-- Highlight the currently active match (while typing /n/N)
+vim.api.nvim_set_hl(0, "IncSearch", { fg = "#ffffff", bg = "#666666", bold = true })
+
+-- Highlight for the current search match under cursor
+vim.api.nvim_set_hl(0, "CurSearch", { fg = "#ffffff", bg = "#666666", bold = true })
+
 
 -- Treesitter
 require("nvim-treesitter.configs").setup({
     ensure_installed = { "cpp", "c", "lua", "python", "rust" },
-    highlight = { enable = true, additional_vim_regex_highlighting = false },
+    highlight = { enable = false, additional_vim_regex_highlighting = false },
 })
 
 
@@ -95,7 +119,6 @@ local builtin = require("telescope.builtin")
 vim.keymap.set("n", "<C-f>", function() builtin.find_files({ cwd = vim.fn.getcwd() }) end, { noremap = true,  silent =  true })
 vim.keymap.set("n", "<C-s>", function() builtin.live_grep({ cwd = vim.fn.getcwd() }) end, { noremap = true, silent = true })
 vim.keymap.set("n", "<C-b>", function() builtin.buffers({ cwd = vim.fn.getcwd() }) end, { noremap = true, silent = true })
-vim.keymap.set("n", "0","^")
 
 -- Autocomplete setup
 local cmp = require("cmp")
@@ -152,7 +175,7 @@ vim.api.nvim_set_hl(0, "LspInlayHint", { fg = "#ff5555",italic = false })
 
 -- Diagnostics
 vim.diagnostic.config({
-    virtual_text = { prefix = "●", source = "always" },
+    virtual_text = { prefix = "|", source = "always" },
     signs = true,
     underline = true,
     severity_sort = true,
