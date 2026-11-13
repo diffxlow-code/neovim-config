@@ -1,7 +1,8 @@
--- Basic options
+-- general nvim settings
+
+---@diagnostic disable: undefined-global
 vim.opt.relativenumber = true
 vim.opt.number = true
-vim.opt.guicursor = "n-v-c:ver25,i-ci-ve:ver25"
 vim.opt.autoindent = true
 vim.opt.smartindent = true
 vim.opt.cindent = true
@@ -14,179 +15,276 @@ vim.opt.incsearch = true
 vim.opt.hlsearch = true
 vim.opt.updatetime = 20
 vim.opt.wrap = false
+vim.opt.guicursor = ""
 vim.opt.termguicolors = true
+vim.opt.splitbelow = true
+vim.opt.splitright = true
+vim.opt.clipboard = "unnamedplus"
 vim.g.mapleader = " "
 
--- Lazy.nvim bootstrap
+-- lazy plugin manager setup
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
-if not vim.loop.fs_stat(lazypath) then
-    vim.fn.system({ "git", "clone", "[https://github.com/folke/lazy.nvim.git](https://github.com/folke/lazy.nvim.git)", lazypath })
+if not (vim.uv or vim.loop).fs_stat(lazypath) then
+    local lazyrepo = "https://github.com/folke/lazy.nvim.git"
+    local out = vim.fn.system({ "git", "clone", "--filter=blob:none", "--branch=stable", lazyrepo, lazypath })
+    if vim.v.shell_error ~= 0 then
+        vim.api.nvim_echo({
+            { "Failed to clone lazy.nvim:\n", "ErrorMsg" },
+            { out, "WarningMsg" },
+            { "\nPress any key to exit..." },
+        }, true, {})
+        vim.fn.getchar()
+        os.exit(1)
+    end
 end
 vim.opt.rtp:prepend(lazypath)
 
--- Plugins
+-- prefix keys
+vim.g.mapleader = " "
+-- vim.g.maplocalleader = "\\"
+-- localmap leader also exists but i dont use it
+
+-- we keep all our plugins here
+
 require("lazy").setup({
-    {"nvim-telescope/telescope.nvim", dependencies = {"nvim-lua/plenary.nvim"}},
-    {"nvim-treesitter/nvim-treesitter", build = ":TSUpdate"},
-    {"projekt0n/github-nvim-theme", name = "github-theme"},
-    {"windwp/nvim-autopairs", event = "InsertEnter", config = true},
-    {"hrsh7th/nvim-cmp"}, {"hrsh7th/cmp-nvim-lsp"}, {"hrsh7th/cmp-buffer"},
-    {"hrsh7th/cmp-path"}, {"L3MON4D3/LuaSnip"},
-    {"rose-pine/neovim", name = "rose-pine"}, {"ThePrimeagen/vim-be-good"},
-    {"olimorris/onedarkpro.nvim", priority = 1000},
-    {"mrcjkb/rustaceanvim", version = "^6", lazy = false},
-    {
-        "lukas-reineke/indent-blankline.nvim",
-        main = "ibl",
-        event = {"BufReadPre", "BufNewFile"},
-        opts =
+    spec = {
+        -- colorscheme
+        { "aymenhafeez/doric-themes.nvim", priority = 1000 },
+        {"metalelf0/base16-black-metal-scheme"},
+        "Mofiqul/vscode.nvim",
+        --telescope
+
         {
-            indent = {char = "│", tab_char = "│",
-            highlight = {"IblIndent"}},
-            whitespace = {remove_blankline_trail = true},
-            scope = {enabled = true, highlight = {"IblScope"},
-            show_start = false, show_end = false},
-            exclude = {filetypes = {"help", "dashboard", "lazy",
-            "NvimTree", "Trouble", "terminal"},
-            buftypes = {"terminal", "nofile"}},
-        },
-        config = function(_, opts) require("ibl").setup(opts)
-            vim.api.nvim_set_hl(0, "IblIndent", {fg = "#555555"})
-            vim.api.nvim_set_hl(0, "IblScope", {fg = "#ff5555"})
-        end,
-    },
+            "nvim-telescope/telescope.nvim",
+            dependencies = {
+                "nvim-lua/plenary.nvim",
+            },
+            opts = {
+                defaults = {
+                    prompt_prefix = "  ",
+                    selection_caret = "  ",
+                    entry_prefix = "  ",
 
-    {
-        "folke/flash.nvim",
-        opts = {
-            highlight  = {
-                backdrop = false;
-            }
-        }
-        , event = "VeryLazy",
-        keys = {
-            {"s", mode = {"n", "x", "o"}, function() require("flash").jump() end,
-            desc = "Flash"},
-            {"S", mode = {"n", "x", "o"},
-            function() require("flash").treesitter() end, desc = "Flash Treesitter"},
-            {"r", mode = "o", function() require("flash").remote() end,
-            desc = "Remote Flash"},
-            {"R", mode = {"o", "x"},
-            function() require("flash").treesitter_search() end,
-            desc = "Treesitter Search"},
-            {"<c-s>", mode = {"c"}, function() require("flash").toggle() end,
-            desc = "Toggle Flash Search"},
-        },
-    }
-})
+                    sorting_strategy = "ascending",
+                    layout_strategy = "horizontal",
 
--- Theme
-vim.cmd("colorscheme quiet")
+                    layout_config = {
+                        horizontal = {
+                            prompt_position = "top",
+                            preview_width = 0.45,
+                            results_width = 0.55,
+                        },
+                        width = 0.80,
+                        height = 0.80,
+                        preview_cutoff = 120,
+                    },
 
+                    border = false,
+                    winblend = 0,
 
---Highlights  
-vim.api.nvim_set_hl(0, "Pmenu", { bg = "#000000", fg = "#ffffff" })
-vim.api.nvim_set_hl(0, "PmenuSel", { bg = "#222222", fg = "#ffffff" })
-vim.api.nvim_set_hl(0, "PmenuSbar", { bg = "#000000" })
-vim.api.nvim_set_hl(0, "PmenuThumb", { bg = "#444444" })
+                    path_display = { "truncate" },
+                    color_devicons = false,
 
--- Visual mode selection
-vim.api.nvim_set_hl(0, "Visual", { bg = "#000000", fg = "#888888" })
+                    results_title = false,
+                    prompt_title = false,
+                    preview_title = false,
 
--- Disable matching parenthesis highlight
-vim.api.nvim_set_hl(0, "MatchParen", { bg = "NONE", fg = "#ff5555" })
+                    dynamic_preview_title = false,
 
-
--- Highlight all search matches
-vim.api.nvim_set_hl(0, "Search", { fg = "#ffffff", bg = "#444444", bold = false })
-
--- Highlight the currently active match (while typing /n/N)
-vim.api.nvim_set_hl(0, "IncSearch", { fg = "#ffffff", bg = "#666666", bold = true })
-
--- Highlight for the current search match under cursor
-vim.api.nvim_set_hl(0, "CurSearch", { fg = "#ffffff", bg = "#666666", bold = true })
-
-
--- Treesitter
-require("nvim-treesitter.configs").setup({
-    ensure_installed = { "cpp", "c", "lua", "python", "rust" },
-    highlight = { enable = false, additional_vim_regex_highlighting = false },
-})
-
-
--- Telescope keymaps
-local builtin = require("telescope.builtin")
-vim.keymap.set("n", "<C-f>", function() builtin.find_files({ cwd = vim.fn.getcwd() }) end, { noremap = true,  silent =  true })
-vim.keymap.set("n", "<C-s>", function() builtin.live_grep({ cwd = vim.fn.getcwd() }) end, { noremap = true, silent = true })
-vim.keymap.set("n", "<C-b>", function() builtin.buffers({ cwd = vim.fn.getcwd() }) end, { noremap = true, silent = true })
-
--- Autocomplete setup
-local cmp = require("cmp")
-cmp.setup({
-    snippet = { expand = function(args) require("luasnip").lsp_expand(args.body) end },
-    mapping = cmp.mapping.preset.insert({
-        ["<C-Space>"] = cmp.mapping.complete(),
-        ["<CR>"] = cmp.mapping.confirm({ select = true }),
-        ["<Tab>"] = cmp.mapping.select_next_item(),
-        ["<S-Tab>"] = cmp.mapping.select_prev_item(),
-    }),
-    sources = { { name = "nvim_lsp" }, { name = "buffer" }, { name = "path" } },
-})
-
--- Rustaceanvim setup (handles rust-analyzer + inlay hints)
-vim.g.rustaceanvim = {
-    lsp = true,
-    inlay_hints = {
-        enable = true,
-        highlight = "LspInlayHint",
-        show_parameter_hints = true,
-        parameter_hints_prefix = " [",
-        parameter_hints_suffix = "] ",
-        other_hints_prefix = " => ",
-        max_len_align = false,
-        right_align = false,
-    },
-    server = {
-        on_attach = function(_, bufnr)
-            local opts = { buffer = bufnr, silent = true }
-            vim.keymap.set("n", "gd", vim.lsp.buf.definition, opts)
-            vim.keymap.set("n", "K", vim.lsp.buf.hover, opts)
-            vim.keymap.set("n", "gr", vim.lsp.buf.references, opts)
-        end,
-        settings = {
-            ["rust-analyzer"] = {
-                inlayHints = {
-                    bindingModeHints = { enable = true },
-                    chainingHints = { enable = true },
-                    closureReturnTypeHints = { enable = "always" },
-                    typeHints = { enable = true },
-                    parameterHints = { enable = true },
+                    mappings = {
+                        i = {
+                            ["<C-j>"] = "move_selection_next",
+                            ["<C-k>"] = "move_selection_previous",
+                        },
+                        n = {
+                            ["j"] = "move_selection_next",
+                            ["k"] = "move_selection_previous",
+                        },
+                    },
                 },
             },
         },
+        -- Mason for lsp
+        {
+            "mason-org/mason.nvim",
+            opts = {}
+        },
+
+        -- nvim-cmp for auto completion
+
+        {
+            "hrsh7th/nvim-cmp",
+            dependencies = {
+                "hrsh7th/cmp-nvim-lsp",
+                "hrsh7th/cmp-buffer",
+                "hrsh7th/cmp-path",
+                -- lspkind is for icons
+                "onsails/lspkind.nvim",
+            },
+            config = function()
+                local cmp = require("cmp")
+
+                cmp.setup({
+                    completion = {
+                        completeopt = "menu,menuone,noselect",
+                    },
+
+                    experimental = {
+                        ghost_text = true,
+                    },
+
+                    -- key mappings for completion
+
+
+                    mapping = cmp.mapping.preset.insert({
+                        ["<Tab>"] = cmp.mapping.confirm({ select = true }),
+                        ["<CR>"] = cmp.mapping.confirm({ select = false }),
+                        ["<C-n>"] = cmp.mapping.select_next_item(),
+                        ["<C-p>"] = cmp.mapping.select_prev_item(),
+                        ["<C-e>"] = cmp.mapping.abort(),
+                    }),
+                    -- sources for completion 
+                    sources = cmp.config.sources({
+                        { name = "nvim_lsp" },
+                        { name = "path" },
+                        { name = "buffer" },
+                    }),
+
+                    -- icons 
+                    formatting = {
+                        format = require("lspkind").cmp_format({
+                            mode = "symbol_text",
+                            maxwidth = 50,
+                            ellipsis_char = "...",
+                        }),
+                    },
+
+                })
+            end,
+        },
+
+        {
+            "https://github.com/ej-shafran/compile-mode.nvim",
+            dependencies = {
+                "nvim-lua/plenary.nvim",
+            },
+
+            config = function ()
+                vim.g.compile_mode = {
+                    default_command = "/home/dev_aadarsh/.local/bin/ziggy/zig build",
+                }
+            end
+        },
+
+        {
+            "nvim-treesitter/nvim-treesitter",
+            build = ":TSUpdate",
+            lazy = false,
+            config = function()
+                require("nvim-treesitter").setup()
+            end,
+        },
     },
-}
 
-vim.api.nvim_set_hl(0, "LspInlayHint", { fg = "#ff5555",italic = false })
-
-
-
--- Highlight for inlay hints
-
--- Diagnostics
-vim.diagnostic.config({
-    virtual_text = { prefix = "|", source = "always" },
-    signs = true,
-    underline = true,
-    severity_sort = true,
-    update_in_insert = true,
+    -- automatic plugin update check
+    checker = { enabled = true },
 })
-vim.api.nvim_set_hl(0, "DiagnosticVirtualTextError", { fg = "#ff5555" })
-vim.api.nvim_set_hl(0, "DiagnosticVirtualTextWarn", { fg = "#ffaa00" })
-vim.api.nvim_set_hl(0, "DiagnosticVirtualTextInfo", { fg = "#00aaff" })
-vim.api.nvim_set_hl(0, "DiagnosticVirtualTextHint", { fg = "#8888ff" })
-vim.keymap.set("n", "[d", vim.diagnostic.goto_prev, { noremap = true, silent = true })
-vim.keymap.set("n", "]d", vim.diagnostic.goto_next, { noremap = true, silent = true })
-vim.keymap.set("n", "<Leader>e", vim.diagnostic.open_float, { noremap = true, silent = true })
 
-vim.cmd("lua vim.lsp.inlay_hint.enable(true)")
+vim.cmd("colorscheme base16-black-metal-gorgoroth")
+
+vim.api.nvim_set_hl(0, "LineNr", {
+    fg = "#666666",
+    bg = "none",
+})
+
+vim.api.nvim_set_hl(0, "CursorLineNr", {
+    fg = "#ffffff",
+    bg = "none",
+    bold = false,
+})
+
+--telescope ( done as documentation )
+
+local builtin = require("telescope.builtin");
+vim.keymap.set('n', '<leader>pv', builtin.find_files, { desc = 'netrw menu' })
+vim.keymap.set('n', '<leader>ps', builtin.live_grep, { desc = 'Telescope live grep' })
+vim.keymap.set('n', '<leader>fb', builtin.buffers, { desc = 'Telescope buffers' })
+vim.keymap.set('n', '<leader>fh', builtin.help_tags, { desc = 'Telescope help tags' })
+
+-- quality of life keymaps
+vim.keymap.set('n', '<leader>nh', ":nohl<CR>", { desc = 'Remove search highlights' })
+vim.keymap.set('n', '<leader>gg', "GG", { desc = 'go to bottom' })
+vim.keymap.set('n', '<leader>le', ":vsplit<CR>", { desc = 'split window' })
+vim.keymap.set('n', '<leader>lt', ":tabnew %<CR>", { desc = 'open a new tab with current buffer' })
+
+-- some lsp keymaps
+vim.keymap.set('n', 'gd',vim.lsp.buf.definition, { desc = 'goto definition' })
+vim.keymap.set('n', 'gr',vim.lsp.buf.references, { desc = 'goto references' })
+
+
+-- code actions
+vim.keymap.set('n', '<leader>ca',vim.lsp.buf.code_action, { desc = 'code actions' })
+
+
+
+-- lsp config shit
+-- lil helper function I wrote
+-- cmd might be different (write abs path instead)
+
+function Default_lsp_setup(name,cmd,filetypes,root_markers)
+    vim.lsp.config(name, {
+        cmd = { cmd },
+        filetypes = { filetypes },
+        root_markers =  root_markers ,
+    })
+
+    vim.lsp.enable(name)
+
+end
+
+-- we call the function for each lsp config we want
+
+-- provide absolute path to your language server executable   
+Default_lsp_setup("zls","/home/dev_aadarsh/.local/share/nvim/mason/packages/zls/zls","zig",{ 'build.zig','build.zig.zon','.git'})
+Default_lsp_setup("lua-language-server","/home/dev_aadarsh/.local/share/nvim/mason/packages/lua-language-server/lua-language-server","lua",{'.git'})
+-- and so on
+
+-- for inline diagnostics (errors and all that stuff)
+vim.diagnostic.config({
+    virtual_text = true,
+    virtual_lines = false,
+    underline = true,
+    signs = true,
+})
+
+vim.api.nvim_set_hl(0, "DiagnosticVirtualTextError", {
+    fg = "#b06a6a",
+    bg = "#241719",
+    italic = true,
+})
+
+vim.api.nvim_set_hl(0, "DiagnosticVirtualTextWarn", {
+    fg = "#b09a70",
+    bg = "#242018",
+    italic = true,
+})
+
+vim.api.nvim_set_hl(0, "DiagnosticVirtualTextInfo", {
+    fg = "#819b9b",
+    bg = "#192122",
+    italic = true,
+})
+
+vim.api.nvim_set_hl(0, "DiagnosticVirtualTextHint", {
+    fg = "#888888",
+    bg = "#202020",
+    italic = true,
+})
+
+-- for inlay hints
+
+vim.api.nvim_set_hl(0, "LspInlayHint", {
+    fg = "#ffffff",
+})
+
+vim.lsp.inlay_hint.enable(true)
